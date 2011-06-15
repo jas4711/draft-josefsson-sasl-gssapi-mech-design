@@ -1,0 +1,515 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en"><head><title>Design Guide for SASL and GSS-API Mechanisms</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Design Guide for SASL and GSS-API Mechanisms">
+<meta name="generator" content="xml2rfc v1.36 (http://xml.resource.org/)">
+<style type='text/css'><!--
+        body {
+                font-family: verdana, charcoal, helvetica, arial, sans-serif;
+                font-size: small; color: #000; background-color: #FFF;
+                margin: 2em;
+        }
+        h1, h2, h3, h4, h5, h6 {
+                font-family: helvetica, monaco, "MS Sans Serif", arial, sans-serif;
+                font-weight: bold; font-style: normal;
+        }
+        h1 { color: #900; background-color: transparent; text-align: right; }
+        h3 { color: #333; background-color: transparent; }
+
+        td.RFCbug {
+                font-size: x-small; text-decoration: none;
+                width: 30px; height: 30px; padding-top: 2px;
+                text-align: justify; vertical-align: middle;
+                background-color: #000;
+        }
+        td.RFCbug span.RFC {
+                font-family: monaco, charcoal, geneva, "MS Sans Serif", helvetica, verdana, sans-serif;
+                font-weight: bold; color: #666;
+        }
+        td.RFCbug span.hotText {
+                font-family: charcoal, monaco, geneva, "MS Sans Serif", helvetica, verdana, sans-serif;
+                font-weight: normal; text-align: center; color: #FFF;
+        }
+
+        table.TOCbug { width: 30px; height: 15px; }
+        td.TOCbug {
+                text-align: center; width: 30px; height: 15px;
+                color: #FFF; background-color: #900;
+        }
+        td.TOCbug a {
+                font-family: monaco, charcoal, geneva, "MS Sans Serif", helvetica, sans-serif;
+                font-weight: bold; font-size: x-small; text-decoration: none;
+                color: #FFF; background-color: transparent;
+        }
+
+        td.header {
+                font-family: arial, helvetica, sans-serif; font-size: x-small;
+                vertical-align: top; width: 33%;
+                color: #FFF; background-color: #666;
+        }
+        td.author { font-weight: bold; font-size: x-small; margin-left: 4em; }
+        td.author-text { font-size: x-small; }
+
+        /* info code from SantaKlauss at http://www.madaboutstyle.com/tooltip2.html */
+        a.info {
+                /* This is the key. */
+                position: relative;
+                z-index: 24;
+                text-decoration: none;
+        }
+        a.info:hover {
+                z-index: 25;
+                color: #FFF; background-color: #900;
+        }
+        a.info span { display: none; }
+        a.info:hover span.info {
+                /* The span will display just on :hover state. */
+                display: block;
+                position: absolute;
+                font-size: smaller;
+                top: 2em; left: -5em; width: 15em;
+                padding: 2px; border: 1px solid #333;
+                color: #900; background-color: #EEE;
+                text-align: left;
+        }
+
+        a { font-weight: bold; }
+        a:link    { color: #900; background-color: transparent; }
+        a:visited { color: #633; background-color: transparent; }
+        a:active  { color: #633; background-color: transparent; }
+
+        p { margin-left: 2em; margin-right: 2em; }
+        p.copyright { font-size: x-small; }
+        p.toc { font-size: small; font-weight: bold; margin-left: 3em; }
+        table.toc { margin: 0 0 0 3em; padding: 0; border: 0; vertical-align: text-top; }
+        td.toc { font-size: small; font-weight: bold; vertical-align: text-top; }
+
+        ol.text { margin-left: 2em; margin-right: 2em; }
+        ul.text { margin-left: 2em; margin-right: 2em; }
+        li      { margin-left: 3em; }
+
+        /* RFC-2629 <spanx>s and <artwork>s. */
+        em     { font-style: italic; }
+        strong { font-weight: bold; }
+        dfn    { font-weight: bold; font-style: normal; }
+        cite   { font-weight: normal; font-style: normal; }
+        tt     { color: #036; }
+        tt, pre, pre dfn, pre em, pre cite, pre span {
+                font-family: "Courier New", Courier, monospace; font-size: small;
+        }
+        pre {
+                text-align: left; padding: 4px;
+                color: #000; background-color: #CCC;
+        }
+        pre dfn  { color: #900; }
+        pre em   { color: #66F; background-color: #FFC; font-weight: normal; }
+        pre .key { color: #33C; font-weight: bold; }
+        pre .id  { color: #900; }
+        pre .str { color: #000; background-color: #CFF; }
+        pre .val { color: #066; }
+        pre .rep { color: #909; }
+        pre .oth { color: #000; background-color: #FCF; }
+        pre .err { background-color: #FCC; }
+
+        /* RFC-2629 <texttable>s. */
+        table.all, table.full, table.headers, table.none {
+                font-size: small; text-align: center; border-width: 2px;
+                vertical-align: top; border-collapse: collapse;
+        }
+        table.all, table.full { border-style: solid; border-color: black; }
+        table.headers, table.none { border-style: none; }
+        th {
+                font-weight: bold; border-color: black;
+                border-width: 2px 2px 3px 2px;
+        }
+        table.all th, table.full th { border-style: solid; }
+        table.headers th { border-style: none none solid none; }
+        table.none th { border-style: none; }
+        table.all td {
+                border-style: solid; border-color: #333;
+                border-width: 1px 2px;
+        }
+        table.full td, table.headers td, table.none td { border-style: none; }
+
+        hr { height: 1px; }
+        hr.insert {
+                width: 80%; border-style: none; border-width: 0;
+                color: #CCC; background-color: #CCC;
+        }
+--></style>
+</head>
+<body>
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<table summary="layout" width="66%" border="0" cellpadding="0" cellspacing="0"><tr><td><table summary="layout" width="100%" border="0" cellpadding="2" cellspacing="1">
+<tr><td class="header">Network Working Group</td><td class="header">S. Josefsson</td></tr>
+<tr><td class="header">Internet-Draft</td><td class="header">SJD AB</td></tr>
+<tr><td class="header">Intended status: Informational</td><td class="header">June 15, 2011</td></tr>
+<tr><td class="header">Expires: December 17, 2011</td><td class="header">&nbsp;</td></tr>
+</table></td></tr></table>
+<h1><br />Design Guide for SASL and GSS-API Mechanisms<br />draft-josefsson-sasl-gssapi-mech-design-00rc1</h1>
+
+<h3>Abstract</h3>
+
+<p>
+        SASL and GSS-API are two security frameworks that are linked
+        together by the GS2 mechanism.  This document is intended to
+        help designers of future SASL and GSS-API mechanisms write
+        better specifications.
+      
+</p>
+<h3>Status of this Memo</h3>
+<p>
+This Internet-Draft is submitted  in full
+conformance with the provisions of BCP&nbsp;78 and BCP&nbsp;79.</p>
+<p>
+Internet-Drafts are working documents of the Internet Engineering
+Task Force (IETF).  Note that other groups may also distribute
+working documents as Internet-Drafts.  The list of current
+Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.</p>
+<p>
+Internet-Drafts are draft documents valid for a maximum of six months
+and may be updated, replaced, or obsoleted by other documents at any time.
+It is inappropriate to use Internet-Drafts as reference material or to cite
+them other than as &ldquo;work in progress.&rdquo;</p>
+<p>
+This Internet-Draft will expire on December 17, 2011.</p>
+
+<h3>Copyright Notice</h3>
+<p>
+Copyright (c) 2011 IETF Trust and the persons identified as the
+document authors.  All rights reserved.</p>
+<p>
+This document is subject to BCP 78 and the IETF Trust's Legal
+Provisions Relating to IETF Documents
+(http://trustee.ietf.org/license-info) in effect on the date of
+publication of this document.  Please review these documents
+carefully, as they describe your rights and restrictions with respect
+to this document. Code Components extracted from this document must
+include Simplified BSD License text as described in Section 4.e of
+the Trust Legal Provisions and are provided without warranty as
+described in the Simplified BSD License.</p>
+<a name="toc"></a><br /><hr />
+<h3>Table of Contents</h3>
+<p class="toc">
+<a href="#intro">1.</a>&nbsp;
+Introduction<br />
+<a href="#issues-sasl">2.</a>&nbsp;
+Issues for SASL mechanisms<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#client-first">2.1.</a>&nbsp;
+Client-First<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#assigning-an-oid">2.2.</a>&nbsp;
+Assigning an OID<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#anchor1">2.3.</a>&nbsp;
+The GS2 header<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#zero-length-messages">2.4.</a>&nbsp;
+Zero Length Messages<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#per-message-tokens">2.5.</a>&nbsp;
+Per-Message Tokens<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#pseudo-random">2.6.</a>&nbsp;
+GSS_Pseudo_random<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gssapi-mech-attributes">2.7.</a>&nbsp;
+GSS-API Mechanism Attributes<br />
+<a href="#issues-gssapi">3.</a>&nbsp;
+Issues for GSS-API mechanisms<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#mutual-auth-and-cb">3.1.</a>&nbsp;
+Support Mutual Authentication and Channel Bindings<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#sasl-name">3.2.</a>&nbsp;
+Allocate a SASL mechanism name<br />
+<a href="#ack">4.</a>&nbsp;
+Acknowledgements<br />
+<a href="#iana">5.</a>&nbsp;
+IANA Considerations<br />
+<a href="#security">6.</a>&nbsp;
+Security Considerations<br />
+<a href="#rfc.references1">7.</a>&nbsp;
+References<br />
+<a href="#rfc.authors">&#167;</a>&nbsp;
+Author's Address<br />
+</p>
+<br clear="all" />
+
+<a name="intro"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.1"></a><h3>1.&nbsp;
+Introduction</h3>
+
+<p>The Generic Security Service Application Program Interface
+        (GSS-API) <a class='info' href='#RFC2743'>[RFC2743]<span> (</span><span class='info'>Linn, J., &ldquo;Generic Security Service Application Program Interface Version 2, Update 1,&rdquo; January&nbsp;2000.</span><span>)</span></a> is a framework that provides
+        security services to applications using a variety of
+        authentication mechanisms.  There are widely implemented C
+        bindings <a class='info' href='#RFC2744'>[RFC2744]<span> (</span><span class='info'>Wray, J., &ldquo;Generic Security Service API Version 2 : C-bindings,&rdquo; January&nbsp;2000.</span><span>)</span></a> of the abstract interface.
+</p>
+<p>Simple Authentication and Security Layer (SASL) <a class='info' href='#RFC4422'>[RFC4422]<span> (</span><span class='info'>Melnikov, A. and K. Zeilenga, &ldquo;Simple Authentication and Security Layer (SASL),&rdquo; June&nbsp;2006.</span><span>)</span></a> is a framework to provide authentication
+        and security layers for connection-based protocols, also using a
+        variety of mechanisms.
+</p>
+<p>The <a class='info' href='#RFC5801'>GS2 mechanism bridge
+          framework<span> (</span><span class='info'>Josefsson, S. and N. Williams, &ldquo;Using Generic Security Service Application Program Interface (GSS-API) Mechanisms in Simple Authentication and Security Layer (SASL): The GS2 Mechanism Family,&rdquo; July&nbsp;2010.</span><span>)</span></a> [RFC5801] describes how every GSS-API mechanisms can be
+        used as a SASL mechanism.  Indirectly, the document also
+        describes how a SASL mechanism (if designed carefully) can be a
+        GSS-API mechanism.  The purpose of this document is to
+        expand the "if designed carefully" remark.
+</p>
+<p>We also mention issues for designers of native GSS-API
+        mechanisms, so that they work as smoothly as possible with SASL
+        applications.
+</p>
+<p>The hope is that future SASL mechanisms will (when possible) be
+        designed in a way so that they are valid GSS-API mechanisms that
+        are used in SASL through GS2.  Understanding the issues and
+        following the recommendations in this document will hopefully
+        make this an easy and wortwhile task.
+</p>
+<p>The document uses terms from <a class='info' href='#RFC2743'>[RFC2743]<span> (</span><span class='info'>Linn, J., &ldquo;Generic Security Service Application Program Interface Version 2, Update 1,&rdquo; January&nbsp;2000.</span><span>)</span></a>, <a class='info' href='#RFC2744'>[RFC2744]<span> (</span><span class='info'>Wray, J., &ldquo;Generic Security Service API Version 2 : C-bindings,&rdquo; January&nbsp;2000.</span><span>)</span></a> and <a class='info' href='#RFC4422'>[RFC4422]<span> (</span><span class='info'>Melnikov, A. and K. Zeilenga, &ldquo;Simple Authentication and Security Layer (SASL),&rdquo; June&nbsp;2006.</span><span>)</span></a>.
+</p>
+<a name="issues-sasl"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.2"></a><h3>2.&nbsp;
+Issues for SASL mechanisms</h3>
+
+<p>This section discusses issues concerning designers of SASL
+        mechanism, so that their SASL mechanism ends up becoming a valid
+        GSS-API mechanism as well.
+</p>
+<a name="client-first"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.2.1"></a><h3>2.1.&nbsp;
+Client-First</h3>
+
+<p>GSS-API and GS2 mechanisms always have client-initiated
+          authentication message exchanges, in SASL terms, thus any SASL
+          mechanism that wants to be the equivalent of a GSS-API
+          mechanism that is wire compatible when used under GS2, also
+          needs to be client-initiated.
+</p>
+<a name="assigning-an-oid"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.2.2"></a><h3>2.2.&nbsp;
+Assigning an OID</h3>
+
+<p>Every GSS-API mechanism is identified by an OID.  For
+          example, the OID for the SCRAM-SHA-1 mechanism (<a class='info' href='#RFC5802'>[RFC5802]<span> (</span><span class='info'>Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms,&rdquo; July&nbsp;2010.</span><span>)</span></a>) is 1.3.6.1.5.5.14.
+</p>
+<p>Thus, SASL mechanisms should get an OID allocated for it when
+          used as a GSS-API mechanism.
+</p>
+<p>For SASL mechanism families, it is difficult to say anything
+          in general.  Often the mechanism family concept is used to
+          provide cryptographic hash agility, and then it is natural for
+          each member of the mechanism family to have its own OID arc
+          from which OIDs are assigned.  When mechanism family members
+          are not allocated manually there needs to be a description how
+          any SASL mechanism family member name is mapped to a unique
+          OID.
+</p>
+<a name="anchor1"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.2.3"></a><h3>2.3.&nbsp;
+The GS2 header</h3>
+
+<p>All initial GSS-API security context tokens normally start
+          with a DER encoded header bearing the OID of the selected
+          mechanism (see section 3.1 of <a class='info' href='#RFC5802'>[RFC5802]<span> (</span><span class='info'>Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms,&rdquo; July&nbsp;2010.</span><span>)</span></a>).  GS2
+          removes this header, and replaces it with a header given by a
+          "gs2-header" ABNF production, see section 4 of <a class='info' href='#RFC5801'>[RFC5801]<span> (</span><span class='info'>Josefsson, S. and N. Williams, &ldquo;Using Generic Security Service Application Program Interface (GSS-API) Mechanisms in Simple Authentication and Security Layer (SASL): The GS2 Mechanism Family,&rdquo; July&nbsp;2010.</span><span>)</span></a>.  The syntax of the "gs2-header" is
+          briefly as follows (NOTE: this is an INFORMATIVE copy):
+</p><div style='display: table; width: 0; margin-left: 3em; margin-right: auto'><pre>
+ gs2-nonstd-flag = "F"
+                   ;; "F" means the mechanism is not a
+                   ;; standard GSS-API mechanism in that the
+                   ;; RFC 2743, Section 3.1 header was missing
+ gs2-cb-flag     = ("p=" cb-name) / "n" / "y"
+                   ;; GS2 channel binding (CB) flag
+                   ;; "p" -&gt; client supports and used CB
+                   ;; "n" -&gt; client does not support CB
+                   ;; "y" -&gt; client supports CB, thinks the
+                   ;;           server does not
+ gs2-authzid    = "a=" saslname
+                   ;; GS2 has to transport an authzid since
+                   ;; the GSS-API has no equivalent
+ gs2-header = [gs2-nonstd-flag ","] gs2-cb-flag "," [gs2-authzid] ","
+</pre></div>
+<p>Therefore, to be GS2 compatible, the first client
+          authentication message for a SASL mechanism should be prefixed
+          with the "gs2-header".
+</p>
+<a name="zero-length-messages"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.2.4"></a><h3>2.4.&nbsp;
+Zero Length Messages</h3>
+
+<p>Some SASL mechanisms use zero-length messages to indicate
+          completion of some step when there's no additional data to
+          send to the peer.  The GSS-API specification <a class='info' href='#RFC2743'>[RFC2743]<span> (</span><span class='info'>Linn, J., &ldquo;Generic Security Service Application Program Interface Version 2, Update 1,&rdquo; January&nbsp;2000.</span><span>)</span></a> contains the following sentence:
+
+        </p>
+<div style='display: table; width: 0; margin-left: 3em; margin-right: auto'><pre>
+   Zero-length tokens are never returned by GSS routines
+   for transfer to a peer.
+</pre></div><p>
+
+
+          Thus any SASL mechanism that wishes to be a GSS-API mechanism
+          cannot use zero-length messages.  Instead, for example, the
+          mechanism can send a constant, one-octet message.
+</p>
+<a name="per-message-tokens"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.2.5"></a><h3>2.5.&nbsp;
+Per-Message Tokens</h3>
+
+<p>GSS-API mechanisms typically provide applications the
+        ability to protect (integrity and confidentiality) arbitrary
+        data after the security context has been negotiated.  If your
+        SASL mechanism is able to derive shared symmetric keys, it is
+        possible to specify how per-message GSS-API tokens would
+        work.
+</p>
+<p>A simple way to achieve this is to re-use the per-message
+          tokens of the <a class='info' href='#RFC4121'>Kerberos V5 GSS-API
+            mechanism<span> (</span><span class='info'>Zhu, L., Jaganathan, K., and S. Hartman, &ldquo;The Kerberos Version 5 Generic Security Service Application Program Interface (GSS-API) Mechanism: Version 2,&rdquo; July&nbsp;2005.</span><span>)</span></a> [RFC4121], using a specific <a class='info' href='#RFC3961'>Kerberos V enctype<span> (</span><span class='info'>Raeburn, K., &ldquo;Encryption and Checksum Specifications for Kerberos 5,&rdquo; February&nbsp;2005.</span><span>)</span></a> [RFC3961] (currently the
+          strongest enctype is based on AES <a class='info' href='#RFC3962'>[RFC3962]<span> (</span><span class='info'>Raeburn, K., &ldquo;Advanced Encryption Standard (AES) Encryption for Kerberos 5,&rdquo; February&nbsp;2005.</span><span>)</span></a>.  The mechanism
+          specification must also specify how to obtain two "protocol"
+          keys, one for each direction.  For example, see section 8.2 of
+          <a class='info' href='#RFC5802'>[RFC5802]<span> (</span><span class='info'>Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms,&rdquo; July&nbsp;2010.</span><span>)</span></a>.
+</p>
+<a name="pseudo-random"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.2.6"></a><h3>2.6.&nbsp;
+GSS_Pseudo_random</h3>
+
+<p>The GSS_Pseudo_random facility <a class='info' href='#RFC4401'>[RFC4401]<span> (</span><span class='info'>Williams, N., &ldquo;A Pseudo-Random Function (PRF) API Extension for the Generic Security Service Application Program Interface (GSS-API),&rdquo; February&nbsp;2006.</span><span>)</span></a>
+          provides GSS-API applications an interface to a
+          mechanism-specific PRF.  If your SASL mechanism is able to
+          derive any shared symmetric keys, it is possible to have the
+          corresponding GSS-API mechanism support GSS_Pseudo_random.  A
+          simple way to achieve this is to re-use the <a class='info' href='#RFC4402'>Kerberos V PRF<span> (</span><span class='info'>Williams, N., &ldquo;A Pseudo-Random Function (PRF) for the Kerberos V Generic Security Service Application Program Interface (GSS-API) Mechanism,&rdquo; February&nbsp;2006.</span><span>)</span></a> [RFC4402].  For example, see
+          section 8.3 of <a class='info' href='#RFC5802'>[RFC5802]<span> (</span><span class='info'>Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms,&rdquo; July&nbsp;2010.</span><span>)</span></a>.
+</p>
+<a name="gssapi-mech-attributes"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.2.7"></a><h3>2.7.&nbsp;
+GSS-API Mechanism Attributes</h3>
+
+<p>Indicating what <a class='info' href='#RFC5587'>[RFC5587]<span> (</span><span class='info'>Williams, N., &ldquo;Extended Generic Security Service Mechanism Inquiry APIs,&rdquo; July&nbsp;2009.</span><span>)</span></a> attributes the
+          resulting GSS-API mechanism will have is useful for GSS-API
+          application writers.  The set of attributes usually include
+          GSS_C_MA_MECH_CONCRETE, GSS_C_MA_ITOK_FRAMED,
+          GSS_C_MA_AUTH_INIT, and GSS_C_MA_AUTH_TARG.  [Add to that
+          list. -Nico]
+</p>
+<a name="issues-gssapi"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.3"></a><h3>3.&nbsp;
+Issues for GSS-API mechanisms</h3>
+
+<a name="mutual-auth-and-cb"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.3.1"></a><h3>3.1.&nbsp;
+Support Mutual Authentication and Channel Bindings</h3>
+
+<p>For GS2 to work with a GSS-API mechanism, the mechanism needs
+          to support mutual authentication and channel bindings.  [Sam
+          makes a convincing argument that this is not true! -Nico] This
+          requirement is not frivolous, many protocols using GSS-API
+          requires these two properties of the mechanism.
+</p>
+<a name="sasl-name"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.3.2"></a><h3>3.2.&nbsp;
+Allocate a SASL mechanism name</h3>
+
+<p>The GSS_Inquire_SASLname_for_mech and
+          GSS_Inquire_mech_for_SASLname calls are used to map between
+          SASL mechanism name and GSS-API mechanism OID.
+</p>
+<p>For this reason, new GSS-API mechanisms should specify a SASL
+          mechanism name conforming to the syntactical rules in <a class='info' href='#RFC4422'>[RFC4422]<span> (</span><span class='info'>Melnikov, A. and K. Zeilenga, &ldquo;Simple Authentication and Security Layer (SASL),&rdquo; June&nbsp;2006.</span><span>)</span></a>.  [It's OK to not specify a SASL
+          mechanism name, but then you'll get an ugly mechanism name
+          derived from the GSS mechanism OID. -Nico]
+</p>
+<a name="ack"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.4"></a><h3>4.&nbsp;
+Acknowledgements</h3>
+
+<p>The need for this document grow out of the authors'
+        contributions to <a class='info' href='#I-D.ietf-kitten-sasl-openid'>[I&#8209;D.ietf&#8209;kitten&#8209;sasl&#8209;openid]<span> (</span><span class='info'>Lear, E., Tschofenig, H., Mauldin, H., and S. Josefsson, &ldquo;A SASL &amp; GSS-API Mechanism for OpenID,&rdquo; June&nbsp;2011.</span><span>)</span></a>,
+        <a class='info' href='#I-D.ietf-kitten-sasl-saml'>[I&#8209;D.ietf&#8209;kitten&#8209;sasl&#8209;saml]<span> (</span><span class='info'>Wierenga, K., Lear, E., and S. Josefsson, &ldquo;A SASL and GSS-API Mechanism for SAML,&rdquo; June&nbsp;2011.</span><span>)</span></a>, and <a class='info' href='#I-D.cantor-ietf-kitten-saml-ec'>[I&#8209;D.cantor&#8209;ietf&#8209;kitten&#8209;saml&#8209;ec]<span> (</span><span class='info'>Cantor, S. and S. Josefsson, &ldquo;SAML Enhanced Client SASL and GSS-API Mechanisms,&rdquo; March&nbsp;2011.</span><span>)</span></a> and discussions
+        involving Eliot Lear, Alexey Melnikov, Sam Hartman, Nico
+        Williams, and Simon Josefsson.  Several of the recommendations
+        in this documented were inspired by the solution used for <a class='info' href='#RFC5802'>SCRAM<span> (</span><span class='info'>Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms,&rdquo; July&nbsp;2010.</span><span>)</span></a> [RFC5802].
+</p>
+<a name="iana"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.5"></a><h3>5.&nbsp;
+IANA Considerations</h3>
+
+<p>None.
+</p>
+<a name="security"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<a name="rfc.section.6"></a><h3>6.&nbsp;
+Security Considerations</h3>
+
+<p>The security considerations of GSS-API and SASL are discussed
+        in their respective specifications (<a class='info' href='#RFC2743'>[RFC2743]<span> (</span><span class='info'>Linn, J., &ldquo;Generic Security Service Application Program Interface Version 2, Update 1,&rdquo; January&nbsp;2000.</span><span>)</span></a>,
+        <a class='info' href='#RFC2744'>[RFC2744]<span> (</span><span class='info'>Wray, J., &ldquo;Generic Security Service API Version 2 : C-bindings,&rdquo; January&nbsp;2000.</span><span>)</span></a>, and <a class='info' href='#RFC4422'>[RFC4422]<span> (</span><span class='info'>Melnikov, A. and K. Zeilenga, &ldquo;Simple Authentication and Security Layer (SASL),&rdquo; June&nbsp;2006.</span><span>)</span></a>).  Also
+        applicable are the security considerations of GS2 <a class='info' href='#RFC5801'>[RFC5801]<span> (</span><span class='info'>Josefsson, S. and N. Williams, &ldquo;Using Generic Security Service Application Program Interface (GSS-API) Mechanisms in Simple Authentication and Security Layer (SASL): The GS2 Mechanism Family,&rdquo; July&nbsp;2010.</span><span>)</span></a> and channel binding <a class='info' href='#RFC5056'>[RFC5056]<span> (</span><span class='info'>Williams, N., &ldquo;On the Use of Channel Bindings to Secure Channels,&rdquo; November&nbsp;2007.</span><span>)</span></a>
+</p>
+<a name="rfc.references1"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<h3>7.&nbsp;References</h3>
+<table width="99%" border="0">
+<tr><td class="author-text" valign="top"><a name="RFC2743">[RFC2743]</a></td>
+<td class="author-text"><a href="mailto:jlinn@rsasecurity.com">Linn, J.</a>, &ldquo;<a href="http://tools.ietf.org/html/rfc2743">Generic Security Service Application Program Interface Version 2, Update 1</a>,&rdquo; RFC&nbsp;2743, January&nbsp;2000 (<a href="http://www.rfc-editor.org/rfc/rfc2743.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC2744">[RFC2744]</a></td>
+<td class="author-text"><a href="mailto:John_Wray@Iris.com">Wray, J.</a>, &ldquo;<a href="http://tools.ietf.org/html/rfc2744">Generic Security Service API Version 2 : C-bindings</a>,&rdquo; RFC&nbsp;2744, January&nbsp;2000 (<a href="http://www.rfc-editor.org/rfc/rfc2744.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC3961">[RFC3961]</a></td>
+<td class="author-text">Raeburn, K., &ldquo;<a href="http://tools.ietf.org/html/rfc3961">Encryption and Checksum Specifications for Kerberos 5</a>,&rdquo; RFC&nbsp;3961, February&nbsp;2005 (<a href="http://www.rfc-editor.org/rfc/rfc3961.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC3962">[RFC3962]</a></td>
+<td class="author-text">Raeburn, K., &ldquo;<a href="http://tools.ietf.org/html/rfc3962">Advanced Encryption Standard (AES) Encryption for Kerberos 5</a>,&rdquo; RFC&nbsp;3962, February&nbsp;2005 (<a href="http://www.rfc-editor.org/rfc/rfc3962.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC4121">[RFC4121]</a></td>
+<td class="author-text">Zhu, L., Jaganathan, K., and S. Hartman, &ldquo;<a href="http://tools.ietf.org/html/rfc4121">The Kerberos Version 5 Generic Security Service Application Program Interface (GSS-API) Mechanism: Version 2</a>,&rdquo; RFC&nbsp;4121, July&nbsp;2005 (<a href="http://www.rfc-editor.org/rfc/rfc4121.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC4401">[RFC4401]</a></td>
+<td class="author-text">Williams, N., &ldquo;<a href="http://tools.ietf.org/html/rfc4401">A Pseudo-Random Function (PRF) API Extension for the Generic Security Service Application Program Interface (GSS-API)</a>,&rdquo; RFC&nbsp;4401, February&nbsp;2006 (<a href="http://www.rfc-editor.org/rfc/rfc4401.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC4402">[RFC4402]</a></td>
+<td class="author-text">Williams, N., &ldquo;<a href="http://tools.ietf.org/html/rfc4402">A Pseudo-Random Function (PRF) for the Kerberos V Generic Security Service Application Program Interface (GSS-API) Mechanism</a>,&rdquo; RFC&nbsp;4402, February&nbsp;2006 (<a href="http://www.rfc-editor.org/rfc/rfc4402.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC4422">[RFC4422]</a></td>
+<td class="author-text">Melnikov, A. and K. Zeilenga, &ldquo;<a href="http://tools.ietf.org/html/rfc4422">Simple Authentication and Security Layer (SASL)</a>,&rdquo; RFC&nbsp;4422, June&nbsp;2006 (<a href="http://www.rfc-editor.org/rfc/rfc4422.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC5056">[RFC5056]</a></td>
+<td class="author-text">Williams, N., &ldquo;<a href="http://tools.ietf.org/html/rfc5056">On the Use of Channel Bindings to Secure Channels</a>,&rdquo; RFC&nbsp;5056, November&nbsp;2007 (<a href="http://www.rfc-editor.org/rfc/rfc5056.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC5587">[RFC5587]</a></td>
+<td class="author-text">Williams, N., &ldquo;<a href="http://tools.ietf.org/html/rfc5587">Extended Generic Security Service Mechanism Inquiry APIs</a>,&rdquo; RFC&nbsp;5587, July&nbsp;2009 (<a href="http://www.rfc-editor.org/rfc/rfc5587.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC5801">[RFC5801]</a></td>
+<td class="author-text">Josefsson, S. and N. Williams, &ldquo;<a href="http://tools.ietf.org/html/rfc5801">Using Generic Security Service Application Program Interface (GSS-API) Mechanisms in Simple Authentication and Security Layer (SASL): The GS2 Mechanism Family</a>,&rdquo; RFC&nbsp;5801, July&nbsp;2010 (<a href="http://www.rfc-editor.org/rfc/rfc5801.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="RFC5802">[RFC5802]</a></td>
+<td class="author-text">Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;<a href="http://tools.ietf.org/html/rfc5802">Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms</a>,&rdquo; RFC&nbsp;5802, July&nbsp;2010 (<a href="http://www.rfc-editor.org/rfc/rfc5802.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="I-D.ietf-kitten-sasl-openid">[I-D.ietf-kitten-sasl-openid]</a></td>
+<td class="author-text">Lear, E., Tschofenig, H., Mauldin, H., and S. Josefsson, &ldquo;<a href="http://tools.ietf.org/html/draft-ietf-kitten-sasl-openid-03">A SASL &amp; GSS-API Mechanism for OpenID</a>,&rdquo; draft-ietf-kitten-sasl-openid-03 (work in progress), June&nbsp;2011 (<a href="http://www.ietf.org/internet-drafts/draft-ietf-kitten-sasl-openid-03.txt">TXT</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="I-D.ietf-kitten-sasl-saml">[I-D.ietf-kitten-sasl-saml]</a></td>
+<td class="author-text">Wierenga, K., Lear, E., and S. Josefsson, &ldquo;<a href="http://tools.ietf.org/html/draft-ietf-kitten-sasl-saml-03">A SASL and GSS-API Mechanism for SAML</a>,&rdquo; draft-ietf-kitten-sasl-saml-03 (work in progress), June&nbsp;2011 (<a href="http://www.ietf.org/internet-drafts/draft-ietf-kitten-sasl-saml-03.txt">TXT</a>, <a href="http://www.ietf.org/internet-drafts/draft-ietf-kitten-sasl-saml-03.pdf">PDF</a>).</td></tr>
+<tr><td class="author-text" valign="top"><a name="I-D.cantor-ietf-kitten-saml-ec">[I-D.cantor-ietf-kitten-saml-ec]</a></td>
+<td class="author-text">Cantor, S. and S. Josefsson, &ldquo;<a href="http://tools.ietf.org/html/draft-cantor-ietf-kitten-saml-ec-01">SAML Enhanced Client SASL and GSS-API Mechanisms</a>,&rdquo; draft-cantor-ietf-kitten-saml-ec-01 (work in progress), March&nbsp;2011 (<a href="http://www.ietf.org/internet-drafts/draft-cantor-ietf-kitten-saml-ec-01.txt">TXT</a>).</td></tr>
+</table>
+
+<a name="rfc.authors"></a><br /><hr />
+<table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
+<h3>Author's Address</h3>
+<table width="99%" border="0" cellpadding="0" cellspacing="0">
+<tr><td class="author-text">&nbsp;</td>
+<td class="author-text">Simon Josefsson</td></tr>
+<tr><td class="author-text">&nbsp;</td>
+<td class="author-text">SJD AB</td></tr>
+<tr><td class="author-text">&nbsp;</td>
+<td class="author-text">Hagagatan 24</td></tr>
+<tr><td class="author-text">&nbsp;</td>
+<td class="author-text">Stockholm  113 47</td></tr>
+<tr><td class="author-text">&nbsp;</td>
+<td class="author-text">SE</td></tr>
+<tr><td class="author" align="right">Email:&nbsp;</td>
+<td class="author-text"><a href="mailto:simon@josefsson.org">simon@josefsson.org</a></td></tr>
+<tr><td class="author" align="right">URI:&nbsp;</td>
+<td class="author-text"><a href="http://josefsson.org/">http://josefsson.org/</a></td></tr>
+</table>
+</body></html>
