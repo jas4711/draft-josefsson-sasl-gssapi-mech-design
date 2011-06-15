@@ -1,0 +1,672 @@
+
+
+
+Network Working Group                                       S. Josefsson
+Internet-Draft                                                    SJD AB
+Intended status: Informational                             June 15, 2011
+Expires: December 17, 2011
+
+
+              Design Guide for SASL and GSS-API Mechanisms
+             draft-josefsson-sasl-gssapi-mech-design-00rc1
+
+Abstract
+
+   SASL and GSS-API are two security frameworks that are linked together
+   by the GS2 mechanism.  This document is intended to help designers of
+   future SASL and GSS-API mechanisms write better specifications.
+
+Status of this Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on December 17, 2011.
+
+Copyright Notice
+
+   Copyright (c) 2011 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+
+
+Josefsson               Expires December 17, 2011               [Page 1]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+Table of Contents
+
+   1.  Introduction . . . . . . . . . . . . . . . . . . . . . . . . .  3
+   2.  Issues for SASL mechanisms . . . . . . . . . . . . . . . . . .  4
+     2.1.  Client-First . . . . . . . . . . . . . . . . . . . . . . .  4
+     2.2.  Assigning an OID . . . . . . . . . . . . . . . . . . . . .  4
+     2.3.  The GS2 header . . . . . . . . . . . . . . . . . . . . . .  4
+     2.4.  Zero Length Messages . . . . . . . . . . . . . . . . . . .  5
+     2.5.  Per-Message Tokens . . . . . . . . . . . . . . . . . . . .  5
+     2.6.  GSS_Pseudo_random  . . . . . . . . . . . . . . . . . . . .  5
+     2.7.  GSS-API Mechanism Attributes . . . . . . . . . . . . . . .  5
+   3.  Issues for GSS-API mechanisms  . . . . . . . . . . . . . . . .  6
+     3.1.  Support Mutual Authentication and Channel Bindings . . . .  6
+     3.2.  Allocate a SASL mechanism name . . . . . . . . . . . . . .  6
+   4.  Acknowledgements . . . . . . . . . . . . . . . . . . . . . . .  7
+   5.  IANA Considerations  . . . . . . . . . . . . . . . . . . . . .  8
+   6.  Security Considerations  . . . . . . . . . . . . . . . . . . .  9
+   7.  References . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+   Author's Address . . . . . . . . . . . . . . . . . . . . . . . . . 12
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011               [Page 2]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+1.  Introduction
+
+   The Generic Security Service Application Program Interface (GSS-API)
+   [RFC2743] is a framework that provides security services to
+   applications using a variety of authentication mechanisms.  There are
+   widely implemented C bindings [RFC2744] of the abstract interface.
+
+   Simple Authentication and Security Layer (SASL) [RFC4422] is a
+   framework to provide authentication and security layers for
+   connection-based protocols, also using a variety of mechanisms.
+
+   The GS2 mechanism [RFC5801] describes how every GSS-API mechanisms
+   (that supports channel bindings and mutual authentication) is used as
+   a SASL mechanism.  Indirectly, the document also describes how a SASL
+   mechanism (if designed carefully) can become a GSS-API mechanism.
+   The purpose of this document is to expand the "if designed carefully"
+   remark.
+
+   We also mention issues for designers of native GSS-API mechanisms, so
+   that they work as smoothly as possible with SASL applications.
+
+   The hope is that future SASL mechanisms will (when possible) be
+   designed in a way so that they are valid GSS-API mechanisms that are
+   used in SASL through GS2.  Understanding the issues and following the
+   recommendations in this document will hopefully make this an easy and
+   wortwhile task.
+
+   The document uses terms from [RFC2743], [RFC2744] and [RFC4422].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011               [Page 3]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+2.  Issues for SASL mechanisms
+
+   This section discuss issues concerning designers of SASL mechanism,
+   so that their SASL mechanism ends up becoming a valid GSS-API
+   mechanism as well.
+
+2.1.  Client-First
+
+   The GS2 mechanism is client-first, in SASL terms, thus any SASL
+   mechanism that wants to provide a GSS-API mechanism that is wire
+   compatible when used under GS2, also needs to be client-first.
+
+2.2.  Assigning an OID
+
+   Every GSS-API mechanism is identified by an OID.  For example, the
+   OID for the SCRAM-SHA-1 mechanism ([RFC5802]) is 1.3.6.1.5.5.14.
+
+   Thus, SASL mechanisms should get an OID allocated for it when used as
+   a GSS-API mechanism.
+
+   For SASL mechanism families, it is difficult to say anything in
+   general.  Often the mechanism family concept is used to provide
+   cryptographic hash agility, and then it is natural for each member of
+   the mechanism family has its own manually allocated OID.  When
+   mechanism family members are not allocated manually there needs to be
+   a description how any SASL mechanism family member name is mapped to
+   a unique OID.
+
+2.3.  The GS2 header
+
+   All initial GSS-API security context tokens normally start with a DER
+   encoded header (see section 3.1 of [RFC5802]).  GS2 will remove this
+   header, and prefix the "gs2-header", see section 4 of [RFC5801].  The
+   syntax of the "gs2-header" is briefly as follows:
+
+    gs2-nonstd-flag = "F"
+                      ;; "F" means the mechanism is not a
+                      ;; standard GSS-API mechanism in that the
+                      ;; RFC 2743, Section 3.1 header was missing
+    gs2-cb-flag     = ("p=" cb-name) / "n" / "y"
+                      ;; GS2 channel binding (CB) flag
+                      ;; "p" -> client supports and used CB
+                      ;; "n" -> client does not support CB
+                      ;; "y" -> client supports CB, thinks the
+                      ;;           server does not
+    gs2-authzid    = "a=" saslname
+                      ;; GS2 has to transport an authzid since
+                      ;; the GSS-API has no equivalent
+
+
+
+Josefsson               Expires December 17, 2011               [Page 4]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+    gs2-header = [gs2-nonstd-flag ","] gs2-cb-flag "," [gs2-authzid] ","
+
+   Therefor, to be GS2 compatible, the first client challenge for a SASL
+   mechanisms should be prefixed with the "gs2-header".
+
+2.4.  Zero Length Messages
+
+   Sometimes SASL mechanisms uses zero-length messages to indicate
+   something implicitly or pass over control to the peer.  The GSS-API
+   specification contains the following sentence:
+
+      Zero-length tokens are never returned by GSS routines
+      for transfer to a peer.
+
+   Thus any SASL mechanism that wishes to be a GSS-API mechanism cannot
+   use zero-length messages.  Instead, for example, the mechanism can
+   send a dummy "=" character.
+
+2.5.  Per-Message Tokens
+
+   GSS-API mechanisms typically provide applications the ability to
+   protect (integrity and confidentiality) arbitrary data after the
+   security context has been negotiated.  If your SASL mechanism is able
+   to derive shared symmetric keys, it is possible to specify how per-
+   message GSS-API tokens would work.  A simple way to achieve this is
+   to re-use one of the Kerberos V enctypes [RFC3962], compare section
+   8.2 of [RFC5802].
+
+2.6.  GSS_Pseudo_random
+
+   The GSS_Pseudo_random [RFC4401] provides GSS-API applications an
+   interface to a mechanism-specific PRF.  If your SASL mechanism is
+   able to derive shared symmetric keys, it is possible to have the
+   corresponding GSS-API mechanism support GSS_Pseudo_random.  A simple
+   way to achieve this is to re-use the Kerberos V PRF [RFC4402],
+   compare section 8.3 of [RFC5802].
+
+2.7.  GSS-API Mechanism Attributes
+
+   Indicating what [RFC5587] attributes the resulting GSS-API mechanism
+   will have is useful for GSS-API application writers.  The set of
+   attributes usually include GSS_C_MA_MECH_CONCRETE,
+   GSS_C_MA_ITOK_FRAMED, GSS_C_MA_AUTH_INIT, and GSS_C_MA_AUTH_TARG.
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011               [Page 5]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+3.  Issues for GSS-API mechanisms
+
+3.1.  Support Mutual Authentication and Channel Bindings
+
+   For GS2 to work with a GSS-API mechanism, the mechanism needs to
+   support mutual authentication and channel bindings.  This requirement
+   is not frivolous, many protocols using GSS-API requires these two
+   properties of the mechanism.
+
+3.2.  Allocate a SASL mechanism name
+
+   The GSS_Inquire_SASLname_for_mech and GSS_Inquire_mech_for_SASLname
+   calls are used to map between SASL mechanism name and GSS-API
+   mechanism OID.
+
+   For this reason, new GSS-API mechanisms should specify a SASL
+   mechanism name conforming to the syntactical rules in [RFC4422].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011               [Page 6]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+4.  Acknowledgements
+
+   The need for this document grow out of the authors' contributions to
+   [I-D.ietf-kitten-sasl-openid], [I-D.ietf-kitten-sasl-saml], and
+   [I-D.cantor-ietf-kitten-saml-ec] and discussions involving Eliot
+   Lear, Alexey Melnikov, Sam Hartman, Nico Williams, and Simon
+   Josefsson.  Several of the recommendations in this documented was
+   inspired by the solution used for SCRAM [RFC5802].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011               [Page 7]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+5.  IANA Considerations
+
+   None.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011               [Page 8]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+6.  Security Considerations
+
+   The security considerations of GSS-API and SASL are discussed in
+   their respective specifications ([RFC2743], [RFC2744], and
+   [RFC4422]).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011               [Page 9]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+7.  References
+
+   [RFC2743]  Linn, J., "Generic Security Service Application Program
+              Interface Version 2, Update 1", RFC 2743, January 2000.
+
+   [RFC2744]  Wray, J., "Generic Security Service API Version 2 :
+              C-bindings", RFC 2744, January 2000.
+
+   [RFC3962]  Raeburn, K., "Advanced Encryption Standard (AES)
+              Encryption for Kerberos 5", RFC 3962, February 2005.
+
+   [RFC4401]  Williams, N., "A Pseudo-Random Function (PRF) API
+              Extension for the Generic Security Service Application
+              Program Interface (GSS-API)", RFC 4401, February 2006.
+
+   [RFC4402]  Williams, N., "A Pseudo-Random Function (PRF) for the
+              Kerberos V Generic Security Service Application Program
+              Interface (GSS-API) Mechanism", RFC 4402, February 2006.
+
+   [RFC4422]  Melnikov, A. and K. Zeilenga, "Simple Authentication and
+              Security Layer (SASL)", RFC 4422, June 2006.
+
+   [RFC5587]  Williams, N., "Extended Generic Security Service Mechanism
+              Inquiry APIs", RFC 5587, July 2009.
+
+   [RFC5801]  Josefsson, S. and N. Williams, "Using Generic Security
+              Service Application Program Interface (GSS-API) Mechanisms
+              in Simple Authentication and Security Layer (SASL): The
+              GS2 Mechanism Family", RFC 5801, July 2010.
+
+   [RFC5802]  Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams,
+              "Salted Challenge Response Authentication Mechanism
+              (SCRAM) SASL and GSS-API Mechanisms", RFC 5802, July 2010.
+
+   [I-D.ietf-kitten-sasl-openid]
+              Lear, E., Tschofenig, H., Mauldin, H., and S. Josefsson,
+              "A SASL & GSS-API Mechanism for OpenID",
+              draft-ietf-kitten-sasl-openid-03 (work in progress),
+              June 2011.
+
+   [I-D.ietf-kitten-sasl-saml]
+              Wierenga, K., Lear, E., and S. Josefsson, "A SASL and GSS-
+              API Mechanism for SAML", draft-ietf-kitten-sasl-saml-03
+              (work in progress), June 2011.
+
+   [I-D.cantor-ietf-kitten-saml-ec]
+              Cantor, S. and S. Josefsson, "SAML Enhanced Client SASL
+              and GSS-API Mechanisms",
+
+
+
+Josefsson               Expires December 17, 2011              [Page 10]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+              draft-cantor-ietf-kitten-saml-ec-01 (work in progress),
+              March 2011.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011              [Page 11]
+
+Internet-Draft       SASL/GSS-API Mech Design Guide            June 2011
+
+
+Author's Address
+
+   Simon Josefsson
+   SJD AB
+   Hagagatan 24
+   Stockholm  113 47
+   SE
+
+   Email: simon@josefsson.org
+   URI:   http://josefsson.org/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Josefsson               Expires December 17, 2011              [Page 12]
+

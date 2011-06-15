@@ -1,0 +1,314 @@
+<?xml version="1.0"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC2743 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.2743.xml'>
+<!ENTITY RFC2744 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.2744.xml'>
+<!ENTITY RFC3962 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.3962.xml'>
+<!ENTITY RFC4401 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4401.xml'>
+<!ENTITY RFC4402 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4402.xml'>
+<!ENTITY RFC4422 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4422.xml'>
+<!ENTITY RFC5587 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.5587.xml'>
+<!ENTITY RFC5801 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.5801.xml'>
+<!ENTITY RFC5802 PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml/reference.RFC.5802.xml'>
+<!ENTITY SASLOPENID PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-kitten-sasl-openid.xml'>
+<!ENTITY SASLSAML PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-kitten-sasl-saml.xml'>
+<!ENTITY SASLSAMLEC PUBLIC '' 'http://xml.resource.org/public/rfc/bibxml3/reference.I-D.cantor-ietf-kitten-saml-ec.xml'>
+]>
+
+<?rfc compact="no"?>
+<?rfc toc="yes"?>
+<?rfc symrefs="yes"?>
+
+<rfc category="info" ipr="trust200902"
+     docName="draft-josefsson-sasl-gssapi-mech-design-00rc1">
+
+  <front>
+
+    <title abbrev="SASL/GSS-API Mech Design Guide">
+      Design Guide for SASL and GSS-API Mechanisms
+    </title>
+
+    <author initials="S." surname="Josefsson"
+	    fullname="Simon Josefsson">
+      <organization>SJD AB</organization>
+      <address>
+	<postal>
+	  <street>Hagagatan 24</street>
+	  <city>Stockholm</city>
+	  <code>113 47</code>
+	  <country>SE</country>
+	</postal>
+	<email>simon@josefsson.org</email>
+	<uri>http://josefsson.org/</uri>
+      </address>
+    </author>
+
+    <date month="June" year="2011"/>
+
+    <abstract>
+
+      <t>
+	SASL and GSS-API are two security frameworks that are linked
+	together by the GS2 mechanism.  This document is intended to
+	help designers of future SASL and GSS-API mechanisms write
+	better specifications.
+      </t>
+
+    </abstract>
+    
+  </front>
+
+  <middle>
+
+    <section anchor="intro"
+	     title="Introduction">
+
+      <t>The Generic Security Service Application Program Interface
+      (GSS-API) <xref target="RFC2743"/> is a framework that provides
+      security services to applications using a variety of
+      authentication mechanisms.  There are widely implemented C
+      bindings <xref target="RFC2744"/> of the abstract interface.</t>
+
+      <t>Simple Authentication and Security Layer (SASL) <xref
+      target="RFC4422"/> is a framework to provide authentication and
+      security layers for connection-based protocols, also using a
+      variety of mechanisms.</t>
+
+      <t>The <xref target="RFC5801">GS2 mechanism</xref> describes how
+      every GSS-API mechanisms (that supports channel bindings and
+      mutual authentication) is used as a SASL mechanism.  Indirectly,
+      the document also describes how a SASL mechanism (if designed
+      carefully) can become a GSS-API mechanism.  The purpose of this
+      document is to expand the "if designed carefully" remark.</t>
+
+      <t>We also mention issues for designers of native GSS-API
+      mechanisms, so that they work as smoothly as possible with SASL
+      applications.</t>
+
+      <t>The hope is that future SASL mechanisms will (when possible)
+      be designed in a way so that they are valid GSS-API mechanisms
+      that are used in SASL through GS2.  Understanding the issues and
+      following the recommendations in this document will hopefully
+      make this an easy and wortwhile task.</t>
+
+      <t>The document uses terms from <xref target="RFC2743"/>, <xref
+      target="RFC2744"/> and <xref target="RFC4422"/>.</t>
+
+    </section>
+
+    <section anchor="issues-sasl"
+	     title="Issues for SASL mechanisms">
+      
+      <t>This section discuss issues concerning designers of SASL
+      mechanism, so that their SASL mechanism ends up becoming a valid
+      GSS-API mechanism as well.</t>
+
+      <section anchor="client-first"
+	       title="Client-First">
+
+	<t>The GS2 mechanism is client-first, in SASL terms, thus any
+	SASL mechanism that wants to provide a GSS-API mechanism that
+	is wire compatible when used under GS2, also needs to be
+	client-first.</t>
+
+      </section>
+
+      <section anchor="assigning-an-oid"
+	       title="Assigning an OID">
+
+	<t>Every GSS-API mechanism is identified by an OID.  For
+	example, the OID for the SCRAM-SHA-1 mechanism (<xref
+	target="RFC5802"/>) is 1.3.6.1.5.5.14.</t>
+
+	<t>Thus, SASL mechanisms should get an OID allocated for it
+	when used as a GSS-API mechanism.</t>
+
+	<t>For SASL mechanism families, it is difficult to say
+	anything in general.  Often the mechanism family concept is
+	used to provide cryptographic hash agility, and then it is
+	natural for each member of the mechanism family has its own
+	manually allocated OID.  When mechanism family members are not
+	allocated manually there needs to be a description how any
+	SASL mechanism family member name is mapped to a unique
+	OID.</t>
+
+      </section>
+
+      <section title="The GS2 header">
+
+	<t>All initial GSS-API security context tokens normally start
+	with a DER encoded header (see section 3.1 of <xref
+	target="RFC5802"/>).  GS2 will remove this header, and prefix
+	the "gs2-header", see section 4 of <xref target="RFC5801"/>.
+	The syntax of the "gs2-header" is briefly as follows:</t>
+
+	<figure>
+	  <artwork><![CDATA[
+ gs2-nonstd-flag = "F"
+                   ;; "F" means the mechanism is not a
+                   ;; standard GSS-API mechanism in that the
+                   ;; RFC 2743, Section 3.1 header was missing
+ gs2-cb-flag     = ("p=" cb-name) / "n" / "y"
+                   ;; GS2 channel binding (CB) flag
+                   ;; "p" -> client supports and used CB
+                   ;; "n" -> client does not support CB
+                   ;; "y" -> client supports CB, thinks the
+                   ;;           server does not
+ gs2-authzid    = "a=" saslname
+                   ;; GS2 has to transport an authzid since
+                   ;; the GSS-API has no equivalent
+ gs2-header = [gs2-nonstd-flag ","] gs2-cb-flag "," [gs2-authzid] ","
+   ]]></artwork>
+        </figure>
+
+	<t>Therefor, to be GS2 compatible, the first client challenge
+	for a SASL mechanisms should be prefixed with the
+	"gs2-header".  </t>
+
+      </section>
+
+      <section anchor="zero-length-messages"
+	       title="Zero Length Messages">
+
+	<t>Sometimes SASL mechanisms uses zero-length messages to
+	indicate something implicitly or pass over control to the
+	peer.  The GSS-API specification contains the following
+	sentence:
+
+	<figure>
+	  <artwork><![CDATA[
+   Zero-length tokens are never returned by GSS routines
+   for transfer to a peer.
+   ]]></artwork>
+        </figure>
+
+	Thus any SASL mechanism that wishes to be a GSS-API mechanism
+	cannot use zero-length messages.  Instead, for example, the
+	mechanism can send a dummy "=" character.</t>
+
+      </section>
+
+      <section anchor="per-message-tokens"
+	       title="Per-Message Tokens">
+
+	<t>GSS-API mechanisms typically provide applications the
+	ability to protect (integrity and confidentiality) arbitrary
+	data after the security context has been negotiated.  If your
+	SASL mechanism is able to derive shared symmetric keys, it is
+	possible to specify how per-message GSS-API tokens would work.
+	A simple way to achieve this is to re-use one of the <xref
+	target="RFC3962">Kerberos V enctypes</xref>, compare section
+	8.2 of <xref target="RFC5802"/>.</t>
+
+	</section>
+
+      <section anchor="pseudo-random"
+	       title="GSS_Pseudo_random">
+
+	<t>The GSS_Pseudo_random <xref target="RFC4401"/> provides
+	GSS-API applications an interface to a mechanism-specific PRF.
+	If your SASL mechanism is able to derive shared symmetric
+	keys, it is possible to have the corresponding GSS-API
+	mechanism support GSS_Pseudo_random.  A simple way to achieve
+	this is to re-use the <xref target="RFC4402">Kerberos V
+	PRF</xref>, compare section 8.3 of <xref
+	target="RFC5802"/>.</t>
+
+	</section>
+
+      <section anchor="gssapi-mech-attributes"
+	       title="GSS-API Mechanism Attributes">
+
+	<t>Indicating what <xref target="RFC5587"/> attributes the
+	resulting GSS-API mechanism will have is useful for GSS-API
+	application writers.  The set of attributes usually include
+	GSS_C_MA_MECH_CONCRETE, GSS_C_MA_ITOK_FRAMED,
+	GSS_C_MA_AUTH_INIT, and GSS_C_MA_AUTH_TARG.</t>
+
+	</section>
+
+    </section>
+
+    <section anchor="issues-gssapi"
+	     title="Issues for GSS-API mechanisms">
+
+      <section anchor="mutual-auth-and-cb"
+	       title="Support Mutual Authentication and Channel Bindings">
+
+	<t>For GS2 to work with a GSS-API mechanism, the mechanism
+	needs to support mutual authentication and channel bindings.
+	This requirement is not frivolous, many protocols using
+	GSS-API requires these two properties of the mechanism.</t>
+
+      </section>
+
+      <section anchor="sasl-name"
+	       title="Allocate a SASL mechanism name">
+
+	<t>The GSS_Inquire_SASLname_for_mech and
+	GSS_Inquire_mech_for_SASLname calls are used to map between
+	SASL mechanism name and GSS-API mechanism OID.</t>
+
+	<t>For this reason, new GSS-API mechanisms should specify a
+	SASL mechanism name conforming to the syntactical rules in
+	<xref target="RFC4422"/>.</t>
+
+      </section>
+
+    </section>
+
+    <section anchor="ack"
+	     title="Acknowledgements">
+
+      <t>The need for this document grow out of the authors'
+      contributions to <xref target="I-D.ietf-kitten-sasl-openid"/>,
+      <xref target="I-D.ietf-kitten-sasl-saml"/>, and <xref
+      target="I-D.cantor-ietf-kitten-saml-ec"/> and discussions
+      involving Eliot Lear, Alexey Melnikov, Sam Hartman, Nico
+      Williams, and Simon Josefsson.  Several of the recommendations
+      in this documented was inspired by the solution used for <xref
+      target="RFC5802">SCRAM</xref>.</t>
+
+    </section>
+
+    <section anchor="iana"
+	     title="IANA Considerations">
+
+      <t>None.</t>
+
+    </section>
+
+    <section anchor="security"
+	     title="Security Considerations">
+
+      <t>The security considerations of GSS-API and SASL are discussed
+      in their respective specifications (<xref target="RFC2743"/>,
+      <xref target="RFC2744"/>, and <xref target="RFC4422"/>).</t>
+
+    </section>
+
+  </middle>
+
+  <back>
+
+    <references title="References">
+
+      &RFC2743;
+      &RFC2744;
+      &RFC3962;
+      &RFC4401;
+      &RFC4402;
+      &RFC4422;
+      &RFC5587;
+      &RFC5801;
+      &RFC5802;
+      &SASLOPENID;
+      &SASLSAML;
+      &SASLSAMLEC;
+
+    </references>
+
+  </back>
+
+</rfc>
