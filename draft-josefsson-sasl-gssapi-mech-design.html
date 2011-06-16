@@ -143,19 +143,17 @@
 <table summary="layout" width="66%" border="0" cellpadding="0" cellspacing="0"><tr><td><table summary="layout" width="100%" border="0" cellpadding="2" cellspacing="1">
 <tr><td class="header">Network Working Group</td><td class="header">S. Josefsson</td></tr>
 <tr><td class="header">Internet-Draft</td><td class="header">SJD AB</td></tr>
-<tr><td class="header">Intended status: Informational</td><td class="header">June 15, 2011</td></tr>
-<tr><td class="header">Expires: December 17, 2011</td><td class="header">&nbsp;</td></tr>
+<tr><td class="header">Intended status: Informational</td><td class="header">June 16, 2011</td></tr>
+<tr><td class="header">Expires: December 18, 2011</td><td class="header">&nbsp;</td></tr>
 </table></td></tr></table>
 <h1><br />Design Guide for SASL and GSS-API Mechanisms<br />draft-josefsson-sasl-gssapi-mech-design-00rc1</h1>
 
 <h3>Abstract</h3>
 
-<p>
-        SASL and GSS-API are two security frameworks that are linked
+<p>SASL and GSS-API are two security frameworks that are linked
         together by the GS2 mechanism.  This document is intended to
-        help designers of future SASL and GSS-API mechanisms write
-        better specifications.
-      
+        help designers of future SASL and GSS-API security mechanisms
+        write better mechanism specifications.
 </p>
 <h3>Status of this Memo</h3>
 <p>
@@ -172,7 +170,7 @@ and may be updated, replaced, or obsoleted by other documents at any time.
 It is inappropriate to use Internet-Drafts as reference material or to cite
 them other than as &ldquo;work in progress.&rdquo;</p>
 <p>
-This Internet-Draft will expire on December 17, 2011.</p>
+This Internet-Draft will expire on December 18, 2011.</p>
 
 <h3>Copyright Notice</h3>
 <p>
@@ -212,7 +210,7 @@ GSS-API Mechanism Attributes<br />
 <a href="#issues-gssapi">3.</a>&nbsp;
 Issues for GSS-API mechanisms<br />
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#mutual-auth-and-cb">3.1.</a>&nbsp;
-Support Mutual Authentication and Channel Bindings<br />
+Mutual Authentication and Channel Binding<br />
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#sasl-name">3.2.</a>&nbsp;
 Allocate a SASL mechanism name<br />
 <a href="#ack">4.</a>&nbsp;
@@ -268,8 +266,8 @@ Introduction</h3>
 Issues for SASL mechanisms</h3>
 
 <p>This section discusses issues concerning designers of SASL
-        mechanism, so that their SASL mechanism ends up becoming a valid
-        GSS-API mechanism as well.
+        mechanism, so that their SASL mechanisms may be used as
+        GSS-API mechanisms as well.
 </p>
 <a name="client-first"></a><br /><hr />
 <table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
@@ -280,7 +278,8 @@ Client-First</h3>
           authentication message exchanges, in SASL terms, thus any SASL
           mechanism that wants to be the equivalent of a GSS-API
           mechanism that is wire compatible when used under GS2, also
-          needs to be client-initiated.
+          needs to be client-initiated.  For some mechanisms this may
+          mean having a constant initial authentication message.
 </p>
 <a name="assigning-an-oid"></a><br /><hr />
 <table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
@@ -290,17 +289,15 @@ Assigning an OID</h3>
 <p>Every GSS-API mechanism is identified by an OID.  For
           example, the OID for the SCRAM-SHA-1 mechanism (<a class='info' href='#RFC5802'>[RFC5802]<span> (</span><span class='info'>Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms,&rdquo; July&nbsp;2010.</span><span>)</span></a>) is 1.3.6.1.5.5.14.
 </p>
-<p>Thus, SASL mechanisms should get an OID allocated for it when
-          used as a GSS-API mechanism.
+<p>Thus, SASL mechanisms should have an OID allocated for them
+          so they can used as GSS-API mechanisms.
 </p>
 <p>For SASL mechanism families, it is difficult to say anything
           in general.  Often the mechanism family concept is used to
-          provide cryptographic hash agility, and then it is natural for
-          each member of the mechanism family to have its own OID arc
-          from which OIDs are assigned.  When mechanism family members
-          are not allocated manually there needs to be a description how
-          any SASL mechanism family member name is mapped to a unique
-          OID.
+          provide for negotiation of cryptographic algorithms
+          (particularly for hash agility).  It is natural for each
+          member of the mechanism family to have its own OID arc from
+          which OIDs are assigned.
 </p>
 <a name="anchor1"></a><br /><hr />
 <table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
@@ -309,8 +306,11 @@ The GS2 header</h3>
 
 <p>All initial GSS-API security context tokens normally start
           with a DER encoded header bearing the OID of the selected
-          mechanism (see section 3.1 of <a class='info' href='#RFC5802'>[RFC5802]<span> (</span><span class='info'>Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms,&rdquo; July&nbsp;2010.</span><span>)</span></a>).  GS2
-          removes this header, and replaces it with a header given by a
+          mechanism (see section 3.1 of <a class='info' href='#RFC5802'>[RFC5802]<span> (</span><span class='info'>Newman, C., Menon-Sen, A., Melnikov, A., and N. Williams, &ldquo;Salted Challenge Response Authentication Mechanism (SCRAM) SASL and GSS-API Mechanisms,&rdquo; July&nbsp;2010.</span><span>)</span></a>).  The
+          GSS-API header also includes a DER-encoded length of the rest
+          of the security context token.  Because this header is not
+          neither constant, nor easy to encode nor decode, GS2 removes
+          this header, and replaces it with a header given by a
           "gs2-header" ABNF production, see section 4 of <a class='info' href='#RFC5801'>[RFC5801]<span> (</span><span class='info'>Josefsson, S. and N. Williams, &ldquo;Using Generic Security Service Application Program Interface (GSS-API) Mechanisms in Simple Authentication and Security Layer (SASL): The GS2 Mechanism Family,&rdquo; July&nbsp;2010.</span><span>)</span></a>.  The syntax of the "gs2-header" is
           briefly as follows (NOTE: this is an INFORMATIVE copy):
 </p><div style='display: table; width: 0; margin-left: 3em; margin-right: auto'><pre>
@@ -330,7 +330,7 @@ The GS2 header</h3>
  gs2-header = [gs2-nonstd-flag ","] gs2-cb-flag "," [gs2-authzid] ","
 </pre></div>
 <p>Therefore, to be GS2 compatible, the first client
-          authentication message for a SASL mechanism should be prefixed
+          authentication message for a SASL mechanism should begin
           with the "gs2-header".
 </p>
 <a name="zero-length-messages"></a><br /><hr />
@@ -358,12 +358,12 @@ Zero Length Messages</h3>
 <a name="rfc.section.2.5"></a><h3>2.5.&nbsp;
 Per-Message Tokens</h3>
 
-<p>GSS-API mechanisms typically provide applications the
-        ability to protect (integrity and confidentiality) arbitrary
-        data after the security context has been negotiated.  If your
-        SASL mechanism is able to derive shared symmetric keys, it is
-        possible to specify how per-message GSS-API tokens would
-        work.
+<p>GSS-API mechanisms typically provide applications the ability
+          to protect (integrity and confidentiality) arbitrary data
+          after the security context has been negotiated.  If your SASL
+          mechanism is able to derive shared symmetric keys, it is
+          possible to specify how per-message GSS-API tokens would
+          work.
 </p>
 <p>A simple way to achieve this is to re-use the per-message
           tokens of the <a class='info' href='#RFC4121'>Kerberos V5 GSS-API
@@ -393,10 +393,11 @@ GSS-API Mechanism Attributes</h3>
 
 <p>Indicating what <a class='info' href='#RFC5587'>[RFC5587]<span> (</span><span class='info'>Williams, N., &ldquo;Extended Generic Security Service Mechanism Inquiry APIs,&rdquo; July&nbsp;2009.</span><span>)</span></a> attributes the
           resulting GSS-API mechanism will have is useful for GSS-API
-          application writers.  The set of attributes usually include
-          GSS_C_MA_MECH_CONCRETE, GSS_C_MA_ITOK_FRAMED,
-          GSS_C_MA_AUTH_INIT, and GSS_C_MA_AUTH_TARG.  [Add to that
-          list. -Nico]
+          application writers.  Standards-track GSS mechanisms MUST have
+          the GSS_C_MA_ITOK_FRAMED attribute.  The set of attributes
+          usually include GSS_C_MA_MECH_CONCRETE, GSS_C_MA_ITOK_FRAMED,
+          GSS_C_MA_AUTH_INIT, GSS_C_MA_AUTH_TARG (if mutual
+          authentication is supported), and GSS_C_MA_CBINDINGS.
 </p>
 <a name="issues-gssapi"></a><br /><hr />
 <table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
@@ -406,13 +407,14 @@ Issues for GSS-API mechanisms</h3>
 <a name="mutual-auth-and-cb"></a><br /><hr />
 <table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
 <a name="rfc.section.3.1"></a><h3>3.1.&nbsp;
-Support Mutual Authentication and Channel Bindings</h3>
+Mutual Authentication and Channel Binding</h3>
 
-<p>For GS2 to work with a GSS-API mechanism, the mechanism needs
-          to support mutual authentication and channel bindings.  [Sam
-          makes a convincing argument that this is not true! -Nico] This
-          requirement is not frivolous, many protocols using GSS-API
-          requires these two properties of the mechanism.
+<p>It is highly desirable that GSS-API and SASL mechanisms
+          support mutual authentication and <a class='info' href='#RFC5056'>channel binding<span> (</span><span class='info'>Williams, N., &ldquo;On the Use of Channel Bindings to Secure Channels,&rdquo; November&nbsp;2007.</span><span>)</span></a> [RFC5056].
+</p>
+<p>SASL mechanisms that support channel binding must prefix the
+          gs2-header <a class='info' href='#RFC5801'>[RFC5801]<span> (</span><span class='info'>Josefsson, S. and N. Williams, &ldquo;Using Generic Security Service Application Program Interface (GSS-API) Mechanisms in Simple Authentication and Security Layer (SASL): The GS2 Mechanism Family,&rdquo; July&nbsp;2010.</span><span>)</span></a> to the
+          application-provided channel bindings data.
 </p>
 <a name="sasl-name"></a><br /><hr />
 <table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
@@ -424,9 +426,9 @@ Allocate a SASL mechanism name</h3>
           SASL mechanism name and GSS-API mechanism OID.
 </p>
 <p>For this reason, new GSS-API mechanisms should specify a SASL
-          mechanism name conforming to the syntactical rules in <a class='info' href='#RFC4422'>[RFC4422]<span> (</span><span class='info'>Melnikov, A. and K. Zeilenga, &ldquo;Simple Authentication and Security Layer (SASL),&rdquo; June&nbsp;2006.</span><span>)</span></a>.  [It's OK to not specify a SASL
-          mechanism name, but then you'll get an ugly mechanism name
-          derived from the GSS mechanism OID. -Nico]
+          mechanism name conforming to the syntactical rules in <a class='info' href='#RFC4422'>[RFC4422]<span> (</span><span class='info'>Melnikov, A. and K. Zeilenga, &ldquo;Simple Authentication and Security Layer (SASL),&rdquo; June&nbsp;2006.</span><span>)</span></a>.  If a SASL name is not specified, then
+          the mechanism's SASL name will be derived from its GSS-API
+          mechanism OID by hashing it.
 </p>
 <a name="ack"></a><br /><hr />
 <table summary="layout" cellpadding="0" cellspacing="2" class="TOCbug" align="right"><tr><td class="TOCbug"><a href="#toc">&nbsp;TOC&nbsp;</a></td></tr></table>
